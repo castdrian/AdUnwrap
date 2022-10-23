@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'constants.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,8 +12,6 @@ import 'package:move_to_background/move_to_background.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:clipboard_listener/clipboard_listener.dart';
 import 'package:package_info/package_info.dart';
-
-import 'constants.dart';
 
 void main() {
   runApp(MyApp());
@@ -62,14 +65,51 @@ class _MyHomePageState extends State<MyHomePage> {
               clipBoardText.toLowerCase().contains(element.toLowerCase()));
 
           if (isSupported) {
-            Fluttertoast.showToast(msg: "Clipboard text: $clipBoardText");
+            await bypassLink(clipBoardText);
           }
         }
       }
     });
   }
 
-  Future<void> _startService() async {
+  Future<void> bypassLink(String url) async {
+    Fluttertoast.showToast(msg: "Bypassing ad link...");
+
+    http.Response response = await http.post(
+      Uri.parse('https://api.bypass.vip/'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'url': url,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      String? bypassedUrl = jsonDecode(response.body)['destination'];
+      if (bypassedUrl != null) {
+        // check if the bypassed url is also an ad url and bypass it again
+        bool isUrl = Uri.parse(bypassedUrl).isAbsolute;
+        if (isUrl) {
+          bool isSupported = supportedUrls.any((element) =>
+              bypassedUrl.toLowerCase().contains(element.toLowerCase()));
+
+          if (isSupported) {
+            await bypassLink(bypassedUrl);
+            return;
+          }
+        }
+
+        await Clipboard.setData(ClipboardData(text: bypassedUrl));
+        Fluttertoast.showToast(msg: "Bypassed URL: $bypassedUrl");
+        await launchUrl(Uri.parse(bypassedUrl));
+      } else {
+        Fluttertoast.showToast(msg: "Error: ${response.statusCode}");
+      }
+    }
+  }
+
+  Future<void> startService() async {
     final androidConfig = FlutterBackgroundAndroidConfig(
       notificationTitle: "AdUnwrap Service",
       notificationText: "Monitoring clipboard for ad links",
@@ -143,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _startService,
+        onPressed: startService,
         tooltip: 'AdUnwrap Service',
         label: widget.serviceStatus,
         icon: widget.buttonIcon,
