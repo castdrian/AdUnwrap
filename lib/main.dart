@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AdUnwrap',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.blue, brightness: Brightness.dark
       ),
       home: MyHomePage(title: 'AdUnwrap'),
     );
