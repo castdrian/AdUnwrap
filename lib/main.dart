@@ -8,6 +8,8 @@ import 'package:flutter_background/flutter_background.dart';
 import 'package:clipboard_listener/clipboard_listener.dart';
 import 'package:package_info/package_info.dart';
 
+import 'constants.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -55,7 +57,13 @@ class _MyHomePageState extends State<MyHomePage> {
         // check if the clipboard contains a url
         bool isUrl = Uri.parse(clipBoardText).isAbsolute;
         if (isUrl) {
-          Fluttertoast.showToast(msg: "Clipboard text: $clipBoardText");
+          // check if supportedUrls contains the url
+          bool isSupported = supportedUrls.any((element) =>
+              clipBoardText.toLowerCase().contains(element.toLowerCase()));
+
+          if (isSupported) {
+            Fluttertoast.showToast(msg: "Clipboard text: $clipBoardText");
+          }
         }
       }
     });
@@ -105,20 +113,32 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-            children: [
-              Text(widget.title),
-              kReleaseMode
-                  ? Text('v${widget.ver} (${widget.bnum})',
-                      style: TextStyle(fontSize: 12))
-                  : Text('')
-            ]),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(widget.title),
+          kReleaseMode
+              ? Text('v${widget.ver} (${widget.bnum})',
+                  style: TextStyle(fontSize: 12))
+              : Text('')
+        ]),
         leading: Image.asset('assets/icon/icon.png'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Text(
+              'Supported URLs (via bypass.vip):',
+              style: TextStyle(fontSize: 16),
+            ),
+            Container(
+              height: 400,
+              child: ListView.builder(
+                itemCount: supportedUrls.length,
+                itemBuilder: (context, index) {
+                  return Text(supportedUrls[index]);
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -127,7 +147,6 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'AdUnwrap Service',
         label: widget.serviceStatus,
         icon: widget.buttonIcon,
-
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
