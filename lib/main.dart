@@ -29,7 +29,7 @@ class MyHomePage extends StatefulWidget {
   MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
-  String serviceStatus = "Press the button to launch the AdUnwrap service";
+  Text serviceStatus = Text("Launch AdUnwrap Service");
   Icon buttonIcon = Icon(Icons.launch_outlined);
 
   @override
@@ -43,7 +43,11 @@ class _MyHomePageState extends State<MyHomePage> {
     ClipboardListener.addListener(() async {
       String? clipBoardText = (await Clipboard.getData(Clipboard.kTextPlain))!.text;
       if (clipBoardText != null) {
-        Fluttertoast.showToast(msg: "Clipboard text: $clipBoardText");
+        // check if the clipboard contains a url
+        bool isUrl = Uri.parse(clipBoardText).isAbsolute;
+        if (isUrl) {
+          Fluttertoast.showToast(msg: "Clipboard text: $clipBoardText");
+        }
       }
     });
   }
@@ -63,14 +67,14 @@ class _MyHomePageState extends State<MyHomePage> {
           if (FlutterBackground.isBackgroundExecutionEnabled) {
             FlutterBackground.disableBackgroundExecution();
             setState(() {
-              widget.serviceStatus = "Press the button to launch the AdUnwrap service";
+              widget.serviceStatus = Text("Launch AdUnwrap Service");
               widget.buttonIcon = Icon(Icons.launch_outlined);
             });
             Fluttertoast.showToast(msg: "AdUnwrap service stopped");
           } else {
               if (success) {
                 setState(() {
-                  widget.serviceStatus = "Press the button to stop the AdUnwrap service";
+                  widget.serviceStatus = Text("Stop AdUnwrap Service");
                   widget.buttonIcon = Icon(Icons.cancel_outlined);
                 });
                 FlutterBackground.enableBackgroundExecution();
@@ -95,16 +99,15 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              widget.serviceStatus
-            ),
+            Image.asset('assets/icon/icon.png', width: 250, height: 250),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _startService,
         tooltip: 'AdUnwrap Service',
-        child: widget.buttonIcon,
+        label: widget.serviceStatus,
+        icon: widget.buttonIcon,
       ),
     );
   }
