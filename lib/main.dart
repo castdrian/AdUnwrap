@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:optimize_battery/optimize_battery.dart';
 import 'package:move_to_background/move_to_background.dart';
 import 'package:flutter_background/flutter_background.dart';
+import 'package:clipboard_listener/clipboard_listener.dart';
 
 void main() {
   runApp(MyApp());
@@ -35,6 +37,17 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    ClipboardListener.addListener(() async {
+      String? clipBoardText = (await Clipboard.getData(Clipboard.kTextPlain))!.text;
+      if (clipBoardText != null) {
+        Fluttertoast.showToast(msg: "Clipboard text: $clipBoardText");
+      }
+    });
+  }
+  
   Future<void> _startService() async {
     final androidConfig = FlutterBackgroundAndroidConfig(
         notificationTitle: "AdUnwrap Service",
